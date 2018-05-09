@@ -6,6 +6,8 @@
 package trie
 
 import "sort"
+import "fmt"
+import "strings"
 
 type Node struct {
 	val      rune
@@ -128,6 +130,92 @@ func (t Trie) PrefixSearch(pre string) []string {
 
 	return collect(node)
 }
+
+// Performs a prefix search against the keys in the trie.
+func (t Trie) PrefixCollect(input string) []interface{} {
+
+	fmt.Println(dump(t.Root(), 0))
+	return nil
+
+	nodes := collectWhileWalkingDown(t.Root(), []rune(input))
+	if nodes == nil || len(nodes) == 0 {
+		return nil
+	}
+
+	res := make([]interface{}, 0, len(nodes))
+	for _, n := range nodes {
+		res = append(res, n.Meta())
+	}
+	return res
+}
+
+func collectWhileWalkingDown(node *Node, runes []rune) []*Node {
+	if node == nil {
+		fmt.Println("nil")
+		return nil
+	}
+
+	if len(runes) == 0 {
+		if node.term {
+			fmt.Println(node)
+			return []*Node{node}
+		}
+		fmt.Println("end", node)
+		return nil
+	}
+
+	n, ok := node.Children()[runes[0]]
+	if !ok {
+		fmt.Println("no children", node)
+		return nil //TODO TEST
+	}
+
+	var nrunes []rune
+	if len(runes) > 1 {
+		nrunes = runes[1:]
+	} else {
+		nrunes = runes[0:0]
+	}
+
+	res := collectWhileWalkingDown(n, nrunes)
+
+	if res == nil {
+		if node.term {
+			fmt.Println(node)
+			return []*Node{node}
+		}
+		fmt.Println("up", string(runes[0]), string(nrunes), node)
+		return nil 
+	} 
+
+	if node.term {
+		fmt.Println("append", node)
+		res = append(res, node)
+	}
+	return res
+}
+
+
+
+func dump(node *Node, indent int) string {
+	if node == nil {
+		return "---"
+	}
+
+	res := strings.Repeat(" ", indent) + string(node.val)
+
+	if node.term {
+		res += "*"
+	}
+
+	for _, v := range node.Children() {
+		res += "\n" + dump(v, indent+1)
+	}
+	
+	return res
+}
+
+
 
 // Creates and returns a pointer to a new child for the node.
 func (n *Node) NewChild(val rune, bitmask uint64, meta interface{}, term bool) *Node {

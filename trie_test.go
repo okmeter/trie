@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 	"testing"
+	"github.com/stretchr/testify/assert"
 )
 
 func addFromFile(t *Trie, path string) {
@@ -150,6 +151,34 @@ func TestTrieKeys(t *testing.T) {
 		}
 	}
 }
+
+
+func TestPrefixCollect(t *testing.T) {
+	trie := New()
+
+	defer func() {
+		r := recover()
+		if r != nil {
+			t.Error(r)
+		}
+	}()
+
+	trie.Add("bar", "bar")
+	trie.Add("foo", "foo")
+	trie.Add("foo.t", "foo.t")
+	trie.Add("foo.t.ball", "foo.t.ball")
+	trie.Add("foo.t.ball.er", "foo.t.ball.er")
+
+	res := trie.PrefixCollect("foo.t.ball")
+	
+	actual := make([]string, 0, len(res))
+	for _, v := range res {
+		actual = append(actual, v.(string))
+	}
+	
+	assert.Equal(t, []string{"foo", "foo.t", "foo.t.ball"}, actual)
+}
+
 
 func TestPrefixSearch(t *testing.T) {
 	trie := New()
